@@ -1,0 +1,1188 @@
+@bot.command()
+async def addspamchannel(message):
+    serverid = message.guild.id
+    spamchannel = message.channel.id
+    file = open('channels.txt', 'r+', encoding="utf8")
+    file_list = file.readlines()
+    file_list_strip = [_.strip('\n') for _ in file_list]
+    if str(spamchannel) in file_list_strip:
+        msg = await message.channel.send(
+            str(message.author.mention) + "**, tento channel už bol nastavený na spam channel**")
+        await msg.add_reaction("🗑️")
+    elif str(serverid) in file_list_strip:
+        position = file_list_strip.index(str(serverid))
+        channelid = file_list_strip[position + 1]
+        channel = bot.get_channel(int(channelid))
+        msg = await message.channel.send(
+            str(message.author.mention) + f'**, tento server už má nastavený spam channel  {channel.mention}**')
+        await msg.add_reaction("🗑️")
+    else:
+        file = open('channels.txt', 'w', encoding="utf8")
+        file.writelines(file_list)
+        file.write(str(serverid) + '\n' + str(spamchannel) + '\n')
+        file.close()
+        channel = bot.get_channel(int(spamchannel))
+        msg = await message.channel.send(
+            str(message.author.mention) + f'** nastavil spam channel {channel.mention} :white_check_mark:**')
+        await msg.add_reaction("🗑️")
+    file.close()
+
+
+@bot.command()
+async def removespamchannel(message):
+    serverid = message.guild.id
+    file = open('channels.txt', 'r+', encoding="utf8")
+    file_list = file.readlines()
+    file_list_strip = [_.strip('\n') for _ in file_list]
+    try:
+        position = file_list_strip.index(str(serverid))
+        channelid = file_list_strip[position + 1]
+        if str(channelid) in file_list_strip:
+            channel = bot.get_channel(int(channelid))
+            file = open('channels.txt', 'w', encoding="utf8")
+            file_list[position] = ''
+            file_list[position + 1] = ''
+            try:
+                if ' ' in file_list[position + 2]:
+                    file_list[position + 2] = ''
+            except:
+                pass
+            msg = await message.channel.send(
+                str(message.author.mention) + f'**, spam channel {channel.mention} bol odstránený :white_check_mark:**')
+            await msg.add_reaction("🗑️")
+            file = open("channels.txt", "w")
+            file.writelines(file_list)
+    except ValueError:
+        msg = await message.channel.send(
+            str(message.author.mention) + "**, tento server nemá nastavený žiadny spam channel**")
+        await msg.add_reaction("🗑️")
+    file.close()
+
+
+@bot.command()
+async def addfilter(message, other):
+    serverid = message.guild.id
+    file = open('channels.txt', 'r+', encoding="utf8")
+    file_list = file.readlines()
+    file_list_strip = [_.strip('\n') for _ in file_list]
+    copy_file = []
+    try:
+        position = file_list_strip.index(str(serverid))
+        channel = file_list_strip[position + 1]
+        try:
+            filtervar = file_list_strip[position + 2]
+            if filtervar.isdigit() is True:
+                for riadok in file_list:
+                    copy_file.append(riadok)
+                    if str(channel) + '\n' in riadok:
+                        copy_file.append(other + ' \n')
+                file = open("channels.txt", "w")
+                file.writelines(copy_file)
+                msg = await message.channel.send(
+                    "**Vlastný spam filter `" + other + "` bol pridaný :white_check_mark:**")
+                await msg.add_reaction("🗑️")
+            else:
+                if len(other) > 6:
+                    msg = await message.channel.send(
+                        str(message.author.mention) + "**Vlastný spam filter môže mať max. 6 písmen**")
+                    await msg.add_reaction("🗑️")
+                else:
+                    file = open("channels.txt", "w")
+                    line = file_list[position + 2].replace('\n', '')
+                    line_list = line.split()
+                    if other in line_list:
+                        msg = await message.channel.send(
+                            str(message.author.mention) + "**, filter `" + other + "` si už nastavoval, ak nevieš aké máš filtre napíš `+serverfilters` **")
+                        await msg.add_reaction("🗑️")
+                        file.writelines(file_list)
+                    elif len(line_list) == 5:
+                        msg = await message.channel.send(
+                            str(message.author.mention) + "**, môžeš mať maximálne 5 filtrov**")
+                        await msg.add_reaction("🗑️")
+                        file.writelines(file_list)
+                    else:
+                        file_list[position + 2] += other + ' '
+                        line = file_list[position + 2].replace('\n', '')
+                        file_list[position + 2] = line + '\n'
+                        file.writelines(file_list)
+                        msg = await message.channel.send(
+                            "**Vlastný spam filter `" + other + "` bol pridaný :white_check_mark:**")
+                        await msg.add_reaction("🗑️")
+
+        except IndexError:
+            file = open("channels.txt", "w")
+            file.writelines(file_list)
+            file.write(other + ' \n')
+            msg = await message.channel.send(
+                "**Vlastný spam filter `" + other + "` bol pridaný :white_check_mark:**")
+            await msg.add_reaction("🗑️")
+
+    except ValueError:
+        msg = await message.channel.send(
+            str(message.author.mention) + "**, tento server nemá nastavený žiadny spam channel**")
+        await msg.add_reaction("🗑️")
+    file.close()
+
+
+@bot.command()
+async def removefilter(message, other):
+    serverid = message.guild.id
+    file = open('channels.txt', 'r+', encoding="utf8")
+    file_list = file.readlines()
+    file_list_strip = [_.strip('\n') for _ in file_list]
+    try:
+        position = file_list_strip.index(str(serverid))
+        try:
+            filtervar = file_list[position + 2]
+            if filtervar.isdigit() is True:
+                msg = await message.channel.send(
+                    str(message.author.mention) + "**, tento channel nemá žiadny filter**")
+                await msg.add_reaction("🗑️")
+            else:
+                file = open('channels.txt', 'w', encoding="utf8")
+                line = file_list[position + 2]
+                line_list = line.split()
+                position = file_list_strip.index(str(serverid))
+                if other not in line_list:
+                    msg = await message.channel.send(
+                        str(message.author.mention) + "**, filter `" + other + "` sa nenachádza medzi channel filtrami, ak nevieš aké máš filtre napíš `+serverfilters` **")
+                    await msg.add_reaction("🗑️")
+                else:
+                    position_line_list = line_list.index(other)
+                    line_list.pop(position_line_list)
+                    file_list[position + 2] = line_list
+                    if not line_list:
+                        file_list[position + 2] = ''
+                    else:
+                        line = ' '.join(line_list)
+                        file_list[position + 2] = line + ' \n'
+                    msg = await message.channel.send(
+                        "**Vlastný spam filter `" + other + "` bol odstránený :white_check_mark:**")
+                    await msg.add_reaction("🗑️")
+                file.writelines(file_list)
+        except IndexError:
+            msg = await message.channel.send(
+                str(message.author.mention) + "**, tento channel nemá žiadny filter**")
+            await msg.add_reaction("🗑️")
+
+    except ValueError:
+        msg = await message.channel.send(
+            str(message.author.mention) + "**, tento server nemá nastavený žiadny spam channel**")
+        await msg.add_reaction("🗑️")
+    file.close()
+
+
+@bot.command()
+async def serverfilters(message):
+    serverid = message.guild.id
+    file = open('channels.txt', 'r+', encoding="utf8")
+    file_list = file.readlines()
+    file_list_strip = [_.strip('\n') for _ in file_list]
+    try:
+        position = file_list_strip.index(str(serverid))
+        try:
+            filtervar = file_list[position + 2]
+            if filtervar.isdigit() is True:
+                msg = await message.channel.send(
+                    str(message.author.mention) + "**, tento channel nemá žiadny filter**")
+                await msg.add_reaction("🗑️")
+            else:
+                line = file_list[position + 2]
+                line_list = line.split()
+                line = ' ∣ '.join(line_list)
+                servername = bot.get_guild(int(serverid))
+                msg = await message.channel.send(
+                    "**" + str(servername) + " filtre:**\n"
+                                             "`" + str(line) + "`")
+                await msg.add_reaction("🗑️")
+
+        except IndexError:
+            msg = await message.channel.send(
+                str(message.author.mention) + "**, tento channel nemá žiadny filter**")
+            await msg.add_reaction("🗑️")
+
+    except ValueError:
+        msg = await message.channel.send(
+            str(message.author.mention) + "**, tento server nemá nastavený žiadny spam channel**")
+        await msg.add_reaction("🗑️")
+    file.close()
+
+
+async def epicgames(url, driver):
+    for i in range(4):
+
+        if i == 0:
+            driver.get(url)
+        else:
+            # REFRESH IF CAPTCHA
+            driver.refresh()
+
+        source = driver.page_source
+
+        if '<span>Free</span>' in source:
+
+            # GET GAME IMAGE
+            position = source.find('property="og:image" content="')
+            source = source[position + 29:]
+            position = source.find('"')
+            game_image = source[:position]
+
+            # GET GAME TITLE
+            position = source.find('"mainEntityOfPage":true,"name":"')
+            source = source[position + 32:]
+            position = source.find('"')
+            title = source[:position]
+
+            # GET GAME PRICE
+            position = source.find('€')
+            source = source[position:]
+            position = source.find("<")
+            game_price = source[:position]
+
+            # GET SALE END TIME
+            position = source.find('Sale ends')
+            source = source[position:]
+            position = source.find('<')
+
+            source = source[:position].split()
+            date = source[2].split('/')
+            date_hour = source[4].split(':')
+
+            embed = discord.Embed(title=title,
+                                  description=f'~~{game_price}~~ • **Sale** ends <t:{int(datetime.datetime(int(date[2]), int(date[0]), int(date[1]), int(date_hour[0])).timestamp())}:d>')
+            embed.add_field(name='\u200b',
+                            value='[{}]({})'.format('**Claim game**', url))
+            embed.set_thumbnail(
+                url="https://cdn.discordapp.com/attachments/672907465670787083/820258283293638676/epic.png")
+            embed.set_footer(text='I took it from - r/FreeGameFindings',
+                             icon_url='https://cdn.discordapp.com/attachments/796453724713123870/881868163137032212/communityIcon_xnoh6m7g9qh71.png')
+
+            embed.set_image(url=game_image)
+            channel_games = bot.get_channel(692810368892010648)
+            await channel_games.send(embed=embed)
+            break
+        else:
+            print('Captcha detected, retrying in 5 seconds.')
+            await asyncio.sleep(random.randint(4, 6))
+
+
+async def steam(url):
+    source = requests.get(url).text
+    if '<p class="game_purchase_discount_quantity ">' in source and 'https://store.steampowered.com/app' in url:
+        source = source[position + 44:]
+        position = source.find('.')
+        description = source[:position]
+
+        # GETTING TITLE
+        position = source.find('<span itemprop="name">')
+        source = source[position + 22:]
+        position = source.find('<')
+        game_title = source[:position]
+
+        # GETTING GAME PICTURE
+        position = source.find('<img style="width:100%;" src="')
+        source = source[position + 30:]
+        position = source.find('"')
+        game_picture = source[:position]
+
+        # GETTING PROMOTION TIME END
+        position = source.find('<p class="game_purchase_discount_quantity ">')
+        source = source[position + 44:]
+        position = source.find('.')
+        description = source[:position].replace(' @', '')
+        for i, c in enumerate(description):
+            if c.isdigit():
+                break
+
+        # GETTING GAME PRICE
+        position = source.find('<div class="discount_original_price">')
+        source = source[position + 37:]
+        position = source.find('<')
+        game_price = source[:position]
+
+        tm = time.localtime()
+        date = description[i:].split()
+        date_hour = date[2].split(':')
+
+        game_link_app = ''.join(x for x in url if x.isdigit())
+        game_link_app = 'steam://store/' + game_link_app
+
+        embed = discord.Embed(title=game_title,
+                              description=f'~~{game_price}~~ • **Sale** ends <t:{int(datetime.datetime(tm[0], tm[1], int(date[0]), int(date_hour[0])).timestamp())}:d>')
+        embed.set_footer(text='I took it from - r/FreeGameFindings',
+                         icon_url='https://cdn.discordapp.com/attachments/796453724713123870/881868163137032212/communityIcon_xnoh6m7g9qh71.png')
+        embed.add_field(name='\u200b',
+                        value=f'**Steam website: **[**Claim game**]({url})\n**Steam app: {game_link_app}**')
+        embed.set_thumbnail(
+            url="https://media.discordapp.net/attachments/672907465670787083/820258285566820402/steam.png")
+        embed.set_image(url=game_picture)
+        channel_games = bot.get_channel(692810368892010648)
+        await channel_games.send(embed=embed)
+
+
+async def gog(url):
+    # IF NOT PROPER URL, SCRAP IT FROM SITE
+    if 'https://www.gog.com/#giveaway' == url:
+        source = requests.get(url).text
+        position = source.find('id="giveaway"')
+        source = source[position + 27:]
+        position = source.find('"')
+        url = f'https://www.gog.com{source[:position]}'
+
+    source = requests.get(url).text
+    print(source)
+
+    position = source.find('<meta property="og:image" content="')
+    source = source[position + 35:]
+    position = source.find('"')
+    game_image = source[:position]
+
+    position = source.find('"title":"')
+    source = source[position + 9:]
+    position = source.find('"')
+
+    await send_embed(source[:position],
+                     'Game is now free on GOG\n',
+                     url,
+                     'https://media.discordapp.net/attachments/672907465670787083/820258294735962152/gog.png?width=910&height=910',
+                     game_image)
+
+
+
+    driver = get_driver()
+    driver.get('https://online-fix.me/')
+
+    try:
+        driver.find_element(By.XPATH, "//a[@class='left user-avatar']")
+    except NoSuchElementException:
+        print('Login into Mogenius')
+        # elem = WebDriverWait(driver, 10).until(
+        # EC.element_to_be_clickable((By.XPATH, '//button[@class=" css-5a47r"][2]')))
+
+        try:
+            driver.find_element(By.XPATH, '//button[@class=" css-5a47r"][2]').click()
+        except ElementClickInterceptedException as e:
+            all_iframes = browser.find_elements_by_tag_name("iframe")
+            if len(all_iframes) > 0:
+                browser.execute_script("""
+                    var elems = document.getElementsByTagName("iframe"); 
+                    for(var i = 0, max = elems.length; i < max; i++)
+                         {
+                             elems[i].hidden=true;
+                         }
+                                      """)
+                print('Total Ads: ' + str(len(all_iframes)))
+            else:
+                print('No frames found')
+            driver.find_element(By.XPATH, '//button[@class=" css-5a47r"][2]').click()
+
+        driver.find_element(By.XPATH, '//input[@name="login_name"]').send_keys('kexo_bot')
+        driver.find_element(By.XPATH, '//input[@type="password"]').send_keys('kexobot123')
+        time.sleep(random.randint(1, 3))
+        driver.find_element(By.XPATH, '//button[@class="btn btn-success"][1]').click()
+
+    elem = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.XPATH, '//div[@class="lc_area ignore-select"]')))
+
+    source = driver.page_source
+    driver.quit()
+
+
+imgdata = base64.b64decode(source)
+
+    with open('lunch.png', 'wb') as f:
+        f.write(imgdata)
+		
+		
+		
+@bot.command()
+async def csrinru(collection):
+    csrinru_temp = collection.find({'_id': ObjectId('6300cc2971ef8350f84d9e56')})
+
+    for i in csrinru_temp:
+        csrinru_temp = i['csrinru_cache']
+
+    # LOGIN
+    driver = get_driver(True)
+
+    driver.get("https://cs.rin.ru/forum/ucp.php?mode=login")
+    elem = WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.XPATH, '//input[@type="submit"]')))
+    driver.find_element(By.XPATH, '//input[@type="text"]').send_keys("KexoTV")
+    driver.find_element(By.XPATH, '//input[@type="password"]').send_keys(os.getenv('CSRINRU'))
+    driver.find_element(By.XPATH, '//input[@name="autologin"]').click()
+    driver.find_element(By.XPATH, '//input[@type="submit"]').click()
+
+    # ACCESS FORUM
+    await asyncio.sleep(5)
+    driver.get('https://cs.rin.ru/forum/viewtopic.php?f=22&t=88598')
+    date = driver.find_element(By.CSS_SELECTOR,
+                               "#pagecontent > table:nth-child(3) > tbody > tr:nth-child(3) > td:nth-child(2) > table > tbody > tr > td > div:nth-child(1) > ul:nth-child(20) > a > span:nth-child(2)").get_attribute(
+        "innerHTML")
+
+    if date != csrinru_temp:
+        link = driver.find_element(By.CSS_SELECTOR,
+                                   "#pagecontent > table:nth-child(3) > tbody > tr:nth-child(3) > td:nth-child(2) > table > tbody > tr > td > div:nth-child(1) > ul:nth-child(20) > a").get_attribute(
+            "href")
+        image = driver.find_element(By.CSS_SELECTOR,
+                                    "#pagecontent > table:nth-child(3) > tbody > tr:nth-child(3) > td:nth-child(2) > table > tbody > tr > td > div:nth-child(1) > img:nth-child(1)").get_attribute(
+            "src")
+
+        embed = discord.Embed(title='Witch it got updated', color=discord.Color.red())
+        embed.add_field(name=f'Upload date: {date}',
+                        value=f'[**__Link__**]({link})')
+
+        embed.set_footer(text='https://cs.rin.ru/forum/viewtopic.php?f=22&t=88598',
+                         icon_url='https://cdn.discordapp.com/attachments/823205909353857085/1010530636391534632/favicon.png')
+
+        embed.set_image(url=image)
+        channel_game3rb = bot.get_channel(882185054174994462)
+        await channel_game3rb.send(embed=embed)
+
+        collection.update_one({'_id': ObjectId('6300cc2971ef8350f84d9e56')},
+                              {'$set': {'csrinru_cache': date}})
+    driver.quit()
+	
+	def get_driver(directory):
+    opts = webdriver.ChromeOptions()
+    opts.add_argument(
+        "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36")
+    opts.add_argument('--headless')
+    opts.add_argument("window-size=1920,1080")
+    opts.add_argument('--disable-setuid-sandbox')
+    opts.add_argument("--disable-infobars")
+    opts.add_argument("--disable-extensions")
+    opts.add_argument("--enable-javascript")
+    opts.add_argument("--no-sandbox")
+    opts.add_argument("--disable-dev-shm-usage")
+    opts.add_argument("--dns-prefetch-disable")
+    if directory is True:
+        opts.add_argument(r"--user-data-dir=\tmp")
+    return webdriver.Chrome(service=Service(r'chromedriver/chromedriver'), options=opts)
+	
+	
+	import datetime
+import time
+
+# noinspection PyUnresolvedReferences
+from YouTube import main
+
+import discord
+from discord import option
+from discord.ui import Button, View
+from discord.ext import commands
+from discord.commands import slash_command
+import random
+import asyncio
+import itertools
+import sys
+import traceback
+from async_timeout import timeout
+from functools import partial
+import yt_dlp
+import os
+
+from typing import Union
+from bson.objectid import ObjectId
+from pymongo import MongoClient
+
+# Suppress noise about console usage from errors
+yt_dlp.utils.bug_reports_message = lambda: ''
+
+activity = ['Valheim', 'Counter-Strike: Global Offensive', 'Minecraft', 'Doom Eternal', 'Red Dead Redemption 2',
+            'Cyberbug 2077', 'Python', 'Gears of War 5',
+            'Call of Duty Modern Warfare', 'Forza Horizon 4', 'Forza Horizon 5', 'Superfighters Deluxe',
+            '7 Days to Die', 'BeamNG', "Tom Clancy's The Division 2", 'Valorant', 'Fallout 4', 'Battlefield V']
+
+ytdlpopts = {
+    'format': 'bestaudio/best',
+    'outtmpl': 'downloads/%(extractor)s-%(id)s-%(title)s.%(ext)s',
+    'restrictfilenames': True,
+    'nocheckcertificate': True,
+    'ignoreerrors': True,
+    'logtostderr': False,
+    'quiet': True,
+    'no_warnings': True,
+    'default_search': 'auto',
+    'source_address': '0.0.0.0',
+    'http_persistent': False,
+    'age_limit': 20,
+    'cookiefile': 'cookies.txt',
+    'force-ipv4': True,
+    'cachedir': False,
+    'noplaylist': False,
+    'flat-playlist': True
+}
+
+
+def convert_time(data):
+    if data.get('duration') is None:
+        return ' ∞'
+    else:
+        if data['duration'] < 3600:
+            return time.strftime('%M:%S', time.gmtime(data['duration']))
+        else:
+            return time.strftime('%H:%M:%S', time.gmtime(data['duration']))
+
+
+class YTDLSource(discord.PCMVolumeTransformer):
+
+    def __init__(self, source, *, data, requester):
+        super().__init__(source)
+        self.requester = requester
+        self.title = data.get('title')
+        self.thumbnail = data.get('thumbnails')[-5:][0]['url']
+        self.web_url = data.get('webpage_url')
+        self.duration = data.get('duration')
+        self.url = data.get('url')
+
+    def __getitem__(self, item: str):
+        return self.__getattribute__(item)
+
+    @classmethod
+    async def create_source(cls, ctx, search: str, downloader, queue, loop):
+
+        loop = loop or asyncio.get_event_loop()
+        to_run = partial(downloader.extract_info, search, download=False)
+        data = await loop.run_in_executor(None, to_run)
+
+        if 'entries' in data and len(data['entries']) > 1:
+            embed = discord.Embed(title="",
+                                  description=f"**Added to queue:\n [{data['title']}]({data['webpage_url']})**",
+                                  color=discord.Color.blue())
+            await ctx.respond(embed=embed)
+            for entry in data['entries']:
+                await queue.put({'webpage_url': entry['webpage_url'], 'requester': ctx, 'title': entry['title'],
+                                 'duration': convert_time(entry['duration'])})
+        else:
+            if 'entries' in data:
+                data = data['entries'][0]
+
+            embed = discord.Embed(title="",
+                                  description=f"**Added to queue:\n [{data['title']}]({data['webpage_url']})**",
+                                  color=discord.Color.blue())
+            await ctx.respond(embed=embed)
+            await queue.put({'webpage_url': data['webpage_url'], 'requester': ctx, 'title': data['title'],
+                             'duration': convert_time(data)})
+
+    @classmethod
+    async def regather_stream(cls, data, downloader, loop):
+        loop = loop or asyncio.get_event_loop()
+        requester = data['requester']
+
+        to_run = partial(downloader.extract_info, data['webpage_url'], download=False)
+        data = await loop.run_in_executor(None, to_run)
+        return cls(discord.FFmpegPCMAudio(data['url']), data=data, requester=requester)
+
+
+class MusicPlayer:
+    __slots__ = (
+        'bot', '_guild', '_channel', '_cog', 'queue', 'next', 'current', 'np', 'volume', '_icon', 'ctx', 'database',
+        'downloader', 'loop')
+
+    def __init__(self, ctx, volumes, database):
+        self.bot = ctx.bot
+        self._guild = ctx.guild
+        self._cog = ctx.cog
+        self._channel = ctx.channel
+
+        self.queue = asyncio.Queue()
+        self.next = asyncio.Event()
+
+        self.np = None
+        self.loop = False
+        self.volume = volumes[str(self._guild.id)]
+        self.database = database
+        self.current = None
+        self.downloader = yt_dlp.YoutubeDL(ytdlpopts)
+
+        ctx.bot.loop.create_task(self.player_loop())
+
+    async def player_loop(self):
+        await self.bot.wait_until_ready()
+
+        while not self.bot.is_closed():
+            self.next.clear()
+
+            try:
+                async with timeout(300):
+                    source = await self.queue.get()
+                    if self.loop is True and len(self._channel.members) - 1 > 1:
+                        await self.queue.put(source)
+
+            except asyncio.TimeoutError:
+                game = discord.Game(str(random.choice(activity)))
+                await self.bot.change_presence(activity=discord.Game(name=game))
+                return self.destroy(self._guild)
+
+            if not isinstance(source, YTDLSource):
+                try:
+                    self.current = source
+                    source = await YTDLSource.regather_stream(source, self.downloader, loop=self.bot.loop)
+                except Exception as e:
+                    await self._channel.send(f'Error when creating player.\n'
+                                             f'```css\n[{e}]\n```')
+                    continue
+
+            embed = discord.Embed(color=discord.Colour.green(), title='Now playing',
+                                  description='[**{}**]({})'.format(source.title, source.web_url))
+            try:
+                embed.set_footer(text=f'Requested by {source.requester.author.name}',
+                                 icon_url=source.requester.author.avatar.url)
+            except AttributeError:
+                embed.set_footer(text=f'Requested by {source.requester.author.name}')
+
+            embed.set_thumbnail(url=source.thumbnail)
+            self._guild.voice_client.play(discord.FFmpegPCMAudio(source.url,
+                                                                 before_options='-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -loglevel -8'),
+                                          after=lambda _: self.bot.loop.call_soon_threadsafe(self.next.set))
+
+            self._guild.voice_client.source = discord.PCMVolumeTransformer(
+                self._guild.voice_client.source, self.volume)
+
+            async def button1_callback(interaction):
+                await self._cog.skip_(interaction)
+
+            async def button2_callback(interaction):
+                if '⏸' in str(button2.emoji):
+                    button2.emoji = '▶'
+                    await self._cog.pause_(interaction)
+                else:
+                    button2.emoji = '⏸'
+                    await self._cog.resume_(interaction)
+
+                await interaction.message.edit(view=view)
+
+            button1 = Button(emoji='⏭️')
+            button2 = Button(emoji='⏸')
+            button1.callback = button1_callback
+            button2.callback = button2_callback
+            view = View(timeout=source.duration, disable_on_timeout=True)
+            view.add_item(button1)
+            view.add_item(button2)
+
+            self.np = await source.requester.send(embed=embed, view=view)
+            if 'carti' in source.title.lower():
+                await source.requester.author.send('debilko')
+
+            await self.next.wait()
+
+            source.cleanup()
+            self.current = None
+
+    def destroy(self, guild):
+        return self.bot.loop.create_task(self._cog.cleanup(guild))
+
+
+# noinspection PyProtectedMember
+class Music(commands.Cog):
+    __slots__ = ('bot', 'players', 'volumes')
+
+    def __init__(self, bot):
+        self.bot = bot
+        self.players = {}
+        self.downloader = yt_dlp.YoutubeDL(ytdlpopts)
+        self.database = MongoClient(
+            f"mongodb+srv://{os.getenv('MONGO_URL')}@cluster0.exygx.mongodb.net/myFirstDatabase?retryWrites=true&w=majority")[
+            "KexoBOTDatabase"]["KexoBOTCollection"]
+
+        self.volumes = self.database.find_one({'_id': ObjectId('617abc9d2255f6aa3a1324ca')}, {'_id': False})
+        for key in self.volumes:
+            self.volumes[key] = float(self.volumes[key])
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        print('Started MusicBOT.py')
+
+    async def cleanup(self, guild):
+        try:
+            await guild.voice_client.disconnect()
+        except AttributeError:
+            pass
+
+        try:
+            del self.players[guild.id]
+        except KeyError:
+            pass
+
+    async def __local_check(self, ctx):
+        if not ctx.guild:
+            raise commands.NoPrivateMessage
+        return True
+
+    async def __error(self, ctx, error):
+        if isinstance(error, commands.NoPrivateMessage):
+            try:
+                return await ctx.respond(
+                    str(ctx.message.author.mention) + ', this command cant be used in dms.')
+            except discord.HTTPException:
+                pass
+        elif isinstance(error, InvalidVoiceChannel):
+            await ctx.respond(str(ctx.author.mention) + ', error when joining.'
+                                                        'Make sure i see that channel.')
+
+        print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
+
+    def get_player(self, ctx):
+        try:
+            player = self.players[ctx.guild.id]
+        except KeyError:
+            if str(ctx.guild.id) not in self.volumes:
+                self.database.update_one({'_id': ObjectId('617abc9d2255f6aa3a1324ca')},
+                                         {"$set": {str(ctx.guild.id): '0.5'}})
+                self.volumes[str(ctx.guild.id)] = 0.5
+            player = MusicPlayer(ctx, self.volumes, self.database)
+            self.players[ctx.guild.id] = player
+        return player
+
+    @slash_command(name='j', guild_only=True)
+    @option("channel", Union[discord.VoiceChannel], description='Joins to your channel.', required=False)
+    async def connect_(self, ctx, channel: discord.VoiceChannel):
+        await self.connect_function(ctx, channel)
+
+    @slash_command(name='p', description='Plays song.', guild_only=True)
+    @commands.cooldown(1, 4, commands.BucketType.user)
+    @option('search',
+            description='Links and words for youtube are supported, soundcloud, reddit and other popular media sites work too')
+    async def play_(self, ctx, search: str):
+
+        vc = ctx.voice_client
+
+        if not vc:
+            vc = await self.connect_function(ctx, None)
+
+        if vc:
+            player = self.get_player(ctx)
+            await ctx.trigger_typing()
+
+            if 'https://www.youtube.com/watch?v=' in search and '&' in search:
+                search = search.split('&')[0]
+            try:
+                await YTDLSource.create_source(ctx, search, self.downloader, player.queue, loop=self.bot.loop)
+
+            except yt_dlp.utils.DownloadError as e:
+                e = str(e).replace('\n', ' ∣ ')
+                await ctx.respond(f'Video wasnt proccesed: <{search}>\n```css\n[{e}]\n```')
+        else:
+            embed = discord.Embed(title="",
+                                  description=str(
+                                      ctx.author.mention) + ", youre not joined. Type `/j` from vc.",
+                                  color=discord.Color.blue())
+            await ctx.respond(embed=embed)
+
+    @slash_command(name='loop', description='Loops queue.', guild_only=True)
+    async def loop_(self, ctx):
+
+        vc = ctx.voice_client
+
+        if not vc:
+            vc = await self.connect_function(ctx, None)
+
+        if vc:
+            player = self.get_player(ctx)
+            if player.loop is False:
+                player.loop = True
+
+                if player.current:
+                    await player.queue.put(player.current)
+
+                embed = discord.Embed(title="",
+                                      description=f"🔁 **Looping current queue.**",
+                                      color=discord.Color.blue())
+                return await ctx.respond(embed=embed)
+            else:
+                player.loop = False
+                del player.queue._queue[-1]
+                embed = discord.Embed(title="",
+                                      description=f":x:  **No longer looping queue.**",
+                                      color=discord.Color.blue())
+                return await ctx.respond(embed=embed)
+        else:
+            embed = discord.Embed(title="",
+                                  description=str(
+                                      ctx.author.mention) + ", youre not joined. Type `/j` from vc.",
+                                  color=discord.Color.blue())
+            await ctx.respond(embed=embed)
+
+    @slash_command(name='build', description='Premení Spotify playlist na Youtube playlist',
+                   guild_ids=[692810367851692032], guild_only=True)
+    @commands.cooldown(1, 20, commands.BucketType.user)
+    async def build_(self, ctx, playlist_link: str):
+        if 'https://open.spotify.com/playlist' in playlist_link:
+
+            async def update_status(progress):
+                await ctx.send(f'Progress: {progress}')
+
+            # main is the file I'm calling
+            search = main(playlist_link, update_status)
+            await ctx.respond(search)
+
+        else:
+            return await ctx.respond('Link môže byť iba __spotify playlist__.')
+
+    @slash_command(name='pause', description='Pauses song.', guild_only=True)
+    async def pause_slash(self, ctx):
+        await self.pause_(ctx)
+
+    @staticmethod
+    async def pause_(ctx):
+        try:
+            vc = ctx.voice_client
+        except AttributeError:
+            vc = ctx.guild.voice_client
+
+        if not vc or not vc.is_playing():
+            embed = discord.Embed(title="",
+                                  description=str(ctx.user.mention) + ', no song playing.',
+                                  color=discord.Color.blue())
+            return await ctx.response.send_message(embed=embed)
+
+        elif vc.is_paused():
+            return
+
+        vc.pause()
+
+        embed = discord.Embed(title="",
+                              description="**⏸   Paused**",
+                              color=discord.Color.blue())
+
+        if type(ctx) is discord.interactions.Interaction:
+            try:
+                embed.set_footer(text=f'Requested by {ctx.user.name}', icon_url=ctx.user.avatar.url)
+            except AttributeError:
+                embed.set_footer(text=f'Requested by {ctx.user.name}')
+
+        await ctx.response.send_message(embed=embed, delete_after=10)
+
+    @slash_command(name='resume', description='Plays paused song.', guild_only=True)
+    async def resume_slash(self, ctx):
+        await self.resume_(ctx)
+
+    @staticmethod
+    async def resume_(ctx):
+        try:
+            vc = ctx.voice_client
+        except AttributeError:
+            vc = ctx.guild.voice_client
+
+        if not vc or not vc.is_connected():
+            embed = discord.Embed(title="",
+                                  description=str(ctx.user.mention) + ', im not joined to vc',
+                                  color=discord.Color.blue())
+            return await ctx.response.send_message(embed=embed)
+
+        vc.resume()
+
+        embed = discord.Embed(title="",
+                              description="**:arrow_forward: Resuming**",
+                              color=discord.Color.blue())
+
+        if type(ctx) is discord.interactions.Interaction:
+            try:
+                embed.set_footer(text=f'Requested by {ctx.user.name}', icon_url=ctx.user.avatar.url)
+            except AttributeError:
+                embed.set_footer(text=f'Requested by {ctx.user.name}')
+
+        await ctx.response.send_message(embed=embed, delete_after=10)
+
+    @slash_command(name='skip', description='Skips music.', guild_only=True)
+    async def skip_slash(self, ctx):
+        await self.skip_(ctx)
+
+    @staticmethod
+    async def skip_(ctx):
+        try:
+            vc = ctx.voice_client
+        except AttributeError:
+            vc = ctx.guild.voice_client
+
+        if not vc or not vc.is_connected():
+            embed = discord.Embed(title="",
+                                  description=str(ctx.user.mention) + '**, im not joined to vc**',
+                                  color=discord.Color.blue())
+            return await ctx.response.send_message(embed=embed)
+
+        if vc.is_paused():
+            pass
+
+        elif not vc.is_playing():
+            embed = discord.Embed(title="",
+                                  description=str(ctx.user.mention) + '**, no song playing**',
+                                  color=discord.Color.blue())
+            return await ctx.response.send_message(embed=embed)
+
+        vc.stop()
+
+        embed = discord.Embed(title="",
+                              description="**⏭️   Skipped**",
+                              color=discord.Color.blue())
+
+        if type(ctx) is discord.interactions.Interaction:
+            try:
+                embed.set_footer(text=f'Requested by {ctx.user.name}', icon_url=ctx.user.avatar.url)
+            except AttributeError:
+                embed.set_footer(text=f'Requested by {ctx.user.name}')
+
+        await ctx.response.send_message(embed=embed)
+
+    @slash_command(name='rm', description='Clears position in queue.', guild_only=True)
+    @option('pos', description='1 Removes the first one', required=False)
+    async def remove_(self, ctx, pos: int):
+
+        vc = ctx.voice_client
+
+        if not vc or not vc.is_connected():
+            embed = discord.Embed(title="",
+                                  description=str(ctx.author.mention) + '**, im not joined to vc**',
+                                  color=discord.Color.blue())
+            return await ctx.respond(embed=embed)
+
+        player = self.get_player(ctx)
+        if pos is None:
+            player.queue._queue.pop()
+        else:
+            try:
+                s = player.queue._queue[pos - 1]
+                del player.queue._queue[pos - 1]
+                embed = discord.Embed(title="",
+                                      description=f"**Removed [{s['title']}]({s['webpage_url']})**",
+                                      color=discord.Color.blue())
+                await ctx.respond(embed=embed)
+            except IndexError:
+                embed = discord.Embed(title="",
+                                      description=f"**Song was not found on `{pos}`, to show what's in queue, type /q.**",
+                                      color=discord.Color.blue())
+                await ctx.respond(embed=embed)
+
+    @slash_command(name='cl', description='Clears queue', guild_only=True)
+    async def clear_(self, ctx):
+
+        vc = ctx.voice_client
+
+        if not vc or not vc.is_connected():
+            embed = discord.Embed(title="",
+                                  description=str(ctx.author.mention) + '**, im not joined to vc',
+                                  color=discord.Color.blue())
+            return await ctx.respond(embed=embed)
+
+        player = self.get_player(ctx)
+        player.queue._queue.clear()
+        await ctx.respond('🗑️ **Cleared**')
+
+    @slash_command(name='q', description='Shows songs in queue.', guild_only=True)
+    async def queue_info(self, ctx):
+        vc = ctx.voice_client
+
+        if not vc or not vc.is_connected():
+            embed = discord.Embed(title="",
+                                  description=str(ctx.author.mention) + '**, im not joined to vc**',
+                                  color=discord.Color.blue())
+            return await ctx.respond(embed=embed)
+
+        player = self.get_player(ctx)
+        if player.loop is True:
+            status = 'Looping queue'
+            footer = '🔁'
+        else:
+            status = 'Now Playing'
+            footer = ''
+
+        if player.queue.empty():
+            embed = discord.Embed(title="", description="**Queue is empty**", color=discord.Color.blue())
+            return await ctx.respond(embed=embed)
+
+        upcoming = list(itertools.islice(player.queue._queue, 0, int(len(player.queue._queue))))
+        fmt = '\n'.join(
+            f"`{(upcoming.index(_)) + 1}.` **[{_['title']}]({_['webpage_url']})** \n `{_['duration']} | Requested by: {_['requester'].author.name}`\n"
+            for _ in upcoming)
+        fmt = f"\n***__{status}:__***\n **[{player.current['title']}]({player.current['webpage_url']})** \n `{player.current['duration']} | Requested by: {player.current['requester'].author.name}`\n\n ***__Next:__***\n" + fmt
+        embed = discord.Embed(title=f'Queue for {ctx.guild.name}', description=fmt, color=discord.Color.blue())
+        embed.set_footer(text=f"\n{footer} {len(upcoming)} songs in queue")
+
+        await ctx.respond(embed=embed)
+
+    @slash_command(name='np', description='Shows song which is playing.', guild_only=True)
+    async def now_playing_(self, ctx):
+        vc = ctx.voice_client
+
+        if not vc or not vc.is_connected():
+            embed = discord.Embed(title="",
+                                  description=str(ctx.author.mention) + '**, im not joined to vc**',
+                                  color=discord.Color.blue())
+            return await ctx.respond(embed=embed)
+
+        player = self.get_player(ctx)
+        if not player.current:
+            embed = discord.Embed(title="",
+                                  description=str(ctx.author.mention) + '**, im not joined to vc**',
+                                  color=discord.Color.blue())
+            return await ctx.respond(embed=embed)
+
+        embed = discord.Embed(title="",
+                              description=f"**[{player.current['title']}]({player.current['webpage_url']}) \n Spustil: {player.current['requester'].author.mention} | `{player.current['duration']}`**",
+                              color=discord.Color.green())
+        embed.set_author(
+            icon_url='https://winaero.com/blog/wp-content/uploads/2019/09/Groove-Music-fluent-design-icon.png',
+            name="Now playing")
+        await ctx.respond(embed=embed)
+
+    @slash_command(name='v', description='Sets volume.', guild_only=True)
+    @option(
+        'vol',
+        description='Max is 200.',
+        min_value=1,
+        max_value=200
+    )
+    async def change_volume(self, ctx, vol: float = None):
+        vc = ctx.voice_client
+
+        if not vc or not vc.is_connected():
+            embed = discord.Embed(title="",
+                                  description=str(ctx.author.mention) + '**, im not joined to vc**',
+                                  color=discord.Color.blue())
+            return await ctx.respond(embed=embed)
+
+        client = ctx.guild.voice_client
+
+        if not vol:
+            try:
+                embed = discord.Embed(title="",
+                                      description=f"🔊 **{int(float(client.source.volume) * 100)}%**",
+                                      color=discord.Color.blue())
+                return await ctx.respond(embed=embed)
+            except AttributeError:
+                embed = discord.Embed(title="",
+                                      description=str(ctx.author.mention) + '**, nothing is playing**',
+                                      color=discord.Color.blue())
+                return await ctx.respond(embed=embed)
+
+        player = self.get_player(ctx)
+        player.volume = vol / 100
+        client.source.volume = player.volume
+
+        embed = discord.Embed(title="", description=f'**🔊 Volume set to `{int(vol)}%`**',
+                              color=discord.Color.blue())
+        await ctx.respond(embed=embed)
+
+        self.database.update_one({'_id': ObjectId('617abc9d2255f6aa3a1324ca')},
+                                 {"$set": {str(ctx.guild.id): str(player.volume)}})
+
+    @slash_command(name='l', description='Leaves voice channel.', guild_only=True)
+    async def leave_(self, ctx):
+
+        vc = ctx.voice_client
+
+        if not vc or not vc.is_connected():
+            embed = discord.Embed(title="",
+                                  description=str(ctx.author.mention) + '**, im not joined to vc**',
+                                  color=discord.Color.blue())
+            return await ctx.respond(embed=embed)
+
+        await ctx.voice_client.disconnect()
+
+        vc = ctx.me.voice
+        embed = discord.Embed(title="", description=f'**✅ Left <#{vc.channel.id}>**',
+                              color=discord.Color.blue())
+        await ctx.respond(embed=embed)
+        game = discord.Game(str(random.choice(activity)))
+        await self.bot.change_presence(activity=discord.Game(name=game))
+
+        await self.cleanup(ctx.guild)
+
+    @staticmethod
+    async def connect_function(ctx, channel: None):
+
+        if not channel:
+            try:
+                channel = ctx.author.voice.channel
+            except AttributeError:
+                return None
+
+        if not channel.members:
+            embed = discord.Embed(title="", description=f'**❌ <#{channel.id}> is empty**',
+                                  color=discord.Color.blue())
+            return await ctx.respond(embed=embed)
+
+        vc = ctx.voice_client
+
+        if vc and channel:
+            if vc.channel.id == channel.id:
+                return
+            try:
+                await vc.move_to(channel)
+            except asyncio.TimeoutError:
+                raise VoiceConnectionError(f'**Moving to channel: <{channel}> timed out.**')
+        else:
+            try:
+                await channel.connect()
+            except asyncio.TimeoutError:
+                raise VoiceConnectionError(f'**Joining to voice channelo: <{channel}> timed out.**')
+        embed = discord.Embed(title="", description=f'**✅ Joined to <#{channel.id}>**',
+                              color=discord.Color.blue())
+        await ctx.respond(embed=embed)
+        return channel
+
+    @slash_command(name='doom', description="Plays doom radio (my fav).", guild_only=True)
+    async def doom_(self, ctx):
+        await ctx.invoke(self.play_, search='https://www.youtube.com/watch?v=JEuAYnjtJP0&ab_channel=proteh')
+
+
+def setup(bot):
+    bot.add_cog(Music(bot))
+
+
+
+
+    async def akwebguide(self):
+
+        post_link = self.database.find_one({'_id': ObjectId('618945c8221f18d804636965')})
+        post_link_cache = post_link['post_link'].split('\n')
+        post_link_cache_old = post_link_cache
+
+        source = self.session.get('https://www.akwebguide.com/').text
+        pos = source.find("<h2 class='post-title'>")
+        source = source[pos:]
+
+        for _ in range(4):
+            # GET POST LINK
+            pattern = re.compile(r"<h2 class='post-title'>.*?<a href='(.*?)'", re.DOTALL)
+            match = pattern.search(source)
+
+            if not match:
+                continue
+
+            post_link = match.group(1)
+            source = source[match.end():]
+            if post_link in post_link_cache:
+                continue
+            else:
+                post_link_cache = [post_link_cache[-1]] + post_link_cache[:-1]
+                post_link_cache[0] = post_link
+
+            # GET POST TITLE
+            pattern = re.compile(r">(.*?)<", re.DOTALL)
+            match = pattern.search(source)
+            title = match.group(1)
+
+            # GET IMAGE URL
+            pattern = re.compile(r"class='post-thumb' src='(.*?)'", re.DOTALL)
+            match = pattern.search(source)
+            image_link = match.group(1).replace('w72-h72-p', '')
+
+            source_post = self.session.get(post_link).text
+
+            # GET APPLE-ID LINK
+            pattern = re.compile(r'<a class="btnSave" href="(.*?)"', re.DOTALL)
+            match = pattern.search(source_post)
+
+            embed = discord.Embed(color=discord.Color.green())
+            embed.add_field(name=title,
+                            value=f"**[Link to Apple-ID]({match.group(1)})**")
+            embed.set_image(url=image_link)
+            embed.set_footer(text=post_link)
+            appleids = bot.get_channel(1077245630403063858)
+            await appleids.send(embed=embed)
+
+        if post_link_cache_old != post_link_cache:
+            self.database.update_one({'_id': ObjectId('618945c8221f18d804636965')},
+                                     {'$set': {
+                                         'post_link': '\n'.join(post_link_cache)}})

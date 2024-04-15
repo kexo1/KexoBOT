@@ -1,0 +1,12 @@
+dnspython
+pymongo
+PyNaCl
+async-timeout
+asyncio
+nest-asyncio
+requests
+imgflip.py
+bs4
+asyncpraw
+py-cord
+fake-useragent
