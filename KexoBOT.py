@@ -54,7 +54,7 @@ class Bot(commands.Bot):
 
     # noinspection PyAttributeOutsideInit
     async def setup_bot(self):
-        nodes = [wavelink.Node(uri='85.88.163.80:3128', password='saher.inzeworld.com')]
+        nodes = [wavelink.Node(uri='lava-v3.ajieblogs.eu.org:443', password='https://dsc.gg/ajidevserver', secure=True)]
 
         sc: spotify.SpotifyClient = spotify.SpotifyClient(
             client_id='85ea9836715b4911adec9dd2885f8149',
