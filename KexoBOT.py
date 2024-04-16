@@ -604,11 +604,13 @@ images_url = ('https://cdn.discordapp.com/attachments', 'https://images-ext',
 async def on_message(message):
     global dumbass
 
-    if 'discord' in message.content.lower() and 'nitro' in message.content.lower() \
-            or 'free' in message.content.lower() and 'nitro' in message.content.lower() \
-            or 'http://' in message.content.lower() and 'discord' in message.content.lower() \
-            or 'http://' in message.content.lower() and 'nitro' in message.content.lower() \
-            or 'gift' in message.content.lower() and 'discord' in message.content.lower():
+    lower_message = message.content.lower()
+
+    if 'discord' in lower_message and 'nitro' in lower_message \
+            or 'free' in lower_message and 'nitro' in lower_message \
+            or 'http://' in lower_message and 'discord' in lower_message \
+            or 'http://' in lower_message and 'nitro' in lower_message \
+            or 'gift' in lower_message and 'discord' in lower_message:
 
         if dumbass != message.author:
             await message.channel.send(f'Clearing potential discord scam from {message.author.mention}.')
