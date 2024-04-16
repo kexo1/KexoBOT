@@ -1,7 +1,7 @@
 <div align = center>
 
-![Python Badge]][Python]
-![MongoDB Badge]][MongoDB]
+[![Python Badge]][Python]
+[![MongoDB Badge]][MongoDB]
 
 <div align = left>
 
