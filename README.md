@@ -1,5 +1,9 @@
+<div align = center>
+
 ![Python Badge]][Python]
-[![MongoDB Badge]][MongoDB]
+![MongoDB Badge]][MongoDB]
+
+<div align = left>
 
 # KexoBOT
 
