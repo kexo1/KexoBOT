@@ -41,7 +41,7 @@ intents.webhooks = False
 
 class Bot(commands.Bot):
     def __init__(self, *, intents: discord.Intents):
-        # set intents and command prefix
+        # Set intents and command prefix
         super().__init__(
             intents=intents,
             command_prefix='+',
@@ -54,21 +54,7 @@ class Bot(commands.Bot):
 
     # noinspection PyAttributeOutsideInit
     async def setup_bot(self):
-        # sync or remove commands of priority guilds right away, instead of waiting for global sync
-        # only for testing
-        # for guild_id in self.config["guild_ids"]:
-        #     guild = discord.Object(id=guild_id)
-        # self.tree.copy_global_to(guild=guild)
-        # await self.tree.sync(guild=guild)
-
-        # global sync
-        # await self.tree.sync()
-
-        # nodes: wavelink.Node = [wavelink.Node(**node) for node in self.config["nodes"]]
-
         nodes = [wavelink.Node(uri='85.88.163.80:3128', password='saher.inzeworld.com')]
-
-        # nodes = wavelink.Node(uri='kexobot.martin-polansky.repl.co:443', password='kexobotballs', secure=True)
 
         sc: spotify.SpotifyClient = spotify.SpotifyClient(
             client_id='85ea9836715b4911adec9dd2885f8149',
@@ -82,10 +68,6 @@ class Bot(commands.Bot):
 
         self.node = nodes
         await wavelink.NodePool.connect(client=self, nodes=nodes, spotify=sc)
-
-        # self.volumes = self.database.find_one({'_id': ObjectId('617abc9d2255f6aa3a1324ca')}, {'_id': False})
-        # for key in self.volumes:
-        #     self.volumes[key] = self.volumes[key]
 
 
 bot = Bot(intents=intents)
@@ -114,7 +96,8 @@ setup()
 
 class MainBOT:
     def __init__(self):
-        self.imgflip_client = imgflip.Imgflip(username="Kexotv", password=os.getenv('IMGFLIP_PASSWORD'), session=requests.Session())
+        self.imgflip_client = imgflip.Imgflip(username="Kexotv", password=os.getenv('IMGFLIP_PASSWORD'),
+                                              session=requests.Session())
 
         self.obrazok = bot.database.find_one({'_id': ObjectId('618945c8221f18d804636965')})
         self.obrazok = self.obrazok['topstrop'].split('\n')
@@ -197,7 +180,8 @@ class MainBOT:
                 embed = discord.Embed(title=f'{submission.title}', url=f'https://www.reddit.com{submission.permalink}',
                                       color=discord.Color.orange())
                 embed.set_footer(text=f'r/{subbreddit_name} ｜🔺{submission.score}｜💬 {submission.num_comments}',
-                                 icon_url=self.icons[guild_subreddit_cache['which_subreddit'] - 1] if self.icons else None)
+                                 icon_url=self.icons[
+                                     guild_subreddit_cache['which_subreddit'] - 1] if self.icons else None)
                 embed.timestamp = datetime.fromtimestamp(submission.created_utc)
 
                 if submission.media:
@@ -333,7 +317,7 @@ async def main_task(main_class):
         if now.weekday == 6:
             main_class.icons = await load_subreddit_icons(main_class.subreddits)
 
-    # UPLOAD TO DATABASE
+    # Upload to database
     update = {}
     for key, value in main_class.subbredit_cache.items():
         to_upload = ['0' if now.hour == 2 else str(value['search_level']), str(value['nsfw']), value['links'],
@@ -495,11 +479,11 @@ async def info(ctx):
     embed.add_field(name="Run time:ㅤㅤ" + '\u200b',
                     value=f"{str(timedelta(seconds=round(int(time.time()) - runTime)))}")
     embed.add_field(name="Ping:ㅤㅤㅤㅤ", value=f"{round(bot.latency * 1000)} ms")
-    embed.add_field(name="Version:", value="7.1")
+    embed.add_field(name="Version:", value="8.0.1")
     embed.add_field(name="Prefix:", value='`/` or `+`')
-    embed.add_field(name="Py-cord version:ㅤ", value='2.4.2')
-    embed.add_field(name="Python version:", value='3.11')
-    embed.set_footer(text="Bot owner: Kexo#4207")
+    embed.add_field(name="Py-cord version:ㅤ", value='2.5.0')
+    embed.add_field(name="Python version:", value='3.11.4')
+    embed.set_footer(text="Bot owner: _kexo")
     await ctx.respond(embed=embed)
 
 
@@ -610,8 +594,6 @@ async def customsong(ctx, csong):
     voice.play(discord.FFmpegPCMAudio(csong))
 
 
-# ________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
-# CLEAR MESSAGE
 dumbass = ''
 images_url = ('https://cdn.discordapp.com/attachments', 'https://images-ext',
               'https://media.discordapp.net/attachments/')
@@ -678,7 +660,8 @@ async def shitpost(ctx, nsfw):
 
 @bot.slash_command(name='add_to', description='Adds string to selected list.', guild_ids=[692810367851692032])
 @discord.ext.commands.is_owner()
-@option('collection', description='Choose database', choices=['Games', 'Site exceptions', 'Crackwatch exceptions', 'Esutaze exceptions'])
+@option('collection', description='Choose database',
+        choices=['Games', 'Site exceptions', 'Crackwatch exceptions', 'Esutaze exceptions'])
 async def add_to(ctx, collection: str, string: str):
     listing = await bot.main_class.manage_list(collection, False)
 
@@ -724,8 +707,6 @@ async def show_data(ctx, collection: str):
     await ctx.respond(embed=embed)
 
 
-# ________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
-# FUN
 count = 0
 
 
@@ -773,15 +754,11 @@ async def convertible(ctx):
         'https://cdn.discordapp.com/attachments/796453724713123870/829037241829163090/DABABY_CONVERTIBLE_IN_REAL_LIFE.mp4')
 
 
-# ________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
-# TOPSTROPSCREENSHOT
 @bot.command(aliases=['ss', 's'], guild_ids=[692810367851692032, 765262686908186654])
 async def topstropscreenshot(ctx):
     await ctx.channel.send(random.choice(bot.main_class.obrazok))
 
 
-# ________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
-# SECRET COMMANDS
 @bot.slash_command(name='secretcommands', guild_ids=[765262686908186654],
                    description='Príkazy, ktoré sú skryté. (Admin)')
 @discord.default_permissions(administrator=True)
@@ -791,8 +768,6 @@ async def secretcommands(ctx):
         await ctx.respond("Správa bola odoslaná :white_check_mark:", delete_after=10)
 
 
-# ________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
-# SONGS
 @bot.slash_command(name='songs', description='Príkazy na songy.',
                    guild_ids=[692810367851692032, 765262686908186654])  # 831092366634385429
 async def songs(ctx):
@@ -801,8 +776,6 @@ async def songs(ctx):
     f.close()
 
 
-# ________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
-# ERRORS
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.errors.CommandNotFound):

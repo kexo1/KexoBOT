@@ -14,5 +14,5 @@ Private discord python bot which is used for automation, music play, testing and
 
 ## Acknowledgments
 
-* the.om - Thank you for helping me to manage embed timeouts.
+* the.om - Thank you for helping me to manage embed timeouts, and fix py-cord and wavelink compability problems in docker.
 * chillymosh - Thank you for helping me fix wavelink errors.
