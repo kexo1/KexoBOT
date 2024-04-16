@@ -1,3 +1,6 @@
+![Python Badge]][Python]
+[![MongoDB Badge]][MongoDB]
+
 # KexoBOT
 
 Private discord python bot which is used for automation, music play, testing and mostly for fun.
@@ -20,7 +23,6 @@ Private discord python bot which is used for automation, music play, testing and
 * the.om - Thank you for helping me to manage embed timeouts, and fix py-cord and wavelink compability problems in docker.
 * chillymosh - Thank you for helping me fix wavelink errors.
 
-<!-- LINKS -->
 
 [Python Badge]: https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54
 [Python]: https://www.python.org/
