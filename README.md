@@ -2,6 +2,8 @@
 
 [![Python Badge]][Python]
 [![MongoDB Badge]][MongoDB]
+[![Docker Badge]][Docker]
+[![Fly.io Badge]][Fly.io]
 
 <div align = left>
 
@@ -10,7 +12,7 @@
 Private discord python bot which is used for automation, music play, testing and mostly for fun.
 
 ## Versioning
-* Python 3.11.4
+* Python ![version](https://img.shields.io/badge/version-3.11.4-blue)
 
 ## Built With
 
@@ -33,3 +35,9 @@ Private discord python bot which is used for automation, music play, testing and
 
 [MongoDB Badge]: https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white
 [MongoDB]: https://www.mongodb.com/
+
+[Fly.io Badge]: https://img.shields.io/badge/Fly.io-purple?style=for-the-badge&logo=CLion
+[Fly.io]: https://fly.io/
+
+[Docker Badge]: https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white
+[Docker]: https://www.docker.com/
