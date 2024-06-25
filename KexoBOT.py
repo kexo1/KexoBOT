@@ -54,7 +54,7 @@ class Bot(commands.Bot):
 
     # noinspection PyAttributeOutsideInit
     async def setup_bot(self):
-        nodes = [wavelink.Node(uri='lava-v3.ajieblogs.eu.org:443', password='https://dsc.gg/ajidevserver', secure=True)]
+        nodes = [wavelink.Node(uri='hk.aarubot.xyz:57095', password='Aaru-the-cutiepie', secure=False)]
 
         sc: spotify.SpotifyClient = spotify.SpotifyClient(
             client_id='85ea9836715b4911adec9dd2885f8149',
@@ -87,7 +87,6 @@ def setup():
     bot.load_extension("cogs.listeners")
     bot.load_extension("cogs.queue")
     bot.load_extension("cogs.audio")
-    # bot.load_extension("cogs.lyrics")
     bot.load_extension("cogs.disconnect")
 
 
@@ -120,7 +119,6 @@ class MainBOT:
             'shid_and_camed', 'discordVideos', 'shitposting', 'ppnojutsu', 'okbuddyretard', 'MoldyMemes', 'MemeVideos',
             'hmm', 'doodoofard', 'dankvideos', '19684', 'whenthe')
 
-        self.icons = load_subreddit_icons(self.subreddits)
         self.subbredit_cache = bot.database.find_one({'_id': ObjectId('61795a8950149bebf7666e55')}, {'_id': False})
         self.subbredit_cache = return_dict(self.subbredit_cache)
 
@@ -180,8 +178,7 @@ class MainBOT:
                 embed = discord.Embed(title=f'{submission.title}', url=f'https://www.reddit.com{submission.permalink}',
                                       color=discord.Color.orange())
                 embed.set_footer(text=f'r/{subbreddit_name} ｜🔺{submission.score}｜💬 {submission.num_comments}',
-                                 icon_url=self.icons[
-                                     guild_subreddit_cache['which_subreddit'] - 1] if self.icons else None)
+                                 icon_url='https://www.vectorico.com/wp-content/uploads/2018/08/Reddit-logo.png')
                 embed.timestamp = datetime.fromtimestamp(submission.created_utc)
 
                 if submission.media:
@@ -196,7 +193,7 @@ class MainBOT:
                     audio_url = url.replace('DASH_220.mp4?source=fallback', 'DASH_AUDIO_128.mp4')
                     url = f"https://sd.rapidsave.com/download.php?permalink=https://reddit.com{submission.permalink}&video_url={url}&audio_url={audio_url}"
 
-                    file_video = await http.download_video(url, submission.over_18, submission.media)
+                    file_video = await videodownloader.download_video(url, submission.over_18, submission.media)
                     await msg.edit(content=None, file=file_video)
 
                 # If it has multiple images
@@ -264,20 +261,7 @@ def return_dict(subbredit_cache):
     return subbredit_cache
 
 
-def load_subreddit_icons(subreddits):
-    icons = []
-    try:
-        for name in subreddits:
-            response = requests.get(f'https://www.reddit.com/r/{name}/about.json', verify=True, headers={
-                'User-Agent': ua.random})
-            json_data = response.json()
-            icons.append(json_data['data'].get('community_icon').replace('amp;', ''))
-        return icons
-    except requests.exceptions.JSONDecodeError:
-        print("Couldn't fetch icons")
-
-
-class Http:
+class VideoDownloader:
     def __init__(self):
         self.session = None
 
@@ -313,9 +297,6 @@ async def main_task(main_class):
     if now.hour == 0:
         game = discord.Game(str(random.choice(activity)))
         await bot.change_presence(activity=discord.Game(name=game))
-
-        if now.weekday == 6:
-            main_class.icons = await load_subreddit_icons(main_class.subreddits)
 
     # Upload to database
     update = {}
@@ -801,5 +782,5 @@ async def on_application_command_error(ctx, error):
         raise error
 
 
-http = Http()
+videodownloader = VideoDownloader()
 bot.run(os.getenv('DISCORD_TOKEN'))
