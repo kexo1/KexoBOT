@@ -33,7 +33,7 @@ class Disconnect(commands.Cog):
 
         vc: wavelink.Player = ctx.voice_client
 
-        if not vc.is_playing or not vc.current:
+        if not vc.playing or not vc.current:
             embed = discord.Embed(title="",
                                   description=ctx.author.mention + ", bot is not playing anything. Type `/p` from vc.",
                                   color=discord.Color.blue())

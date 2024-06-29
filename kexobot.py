@@ -1,9 +1,9 @@
+import socket
 from datetime import datetime, timedelta
 import os
 import random
 import time
 from fake_useragent import UserAgent
-from wavelink.ext import spotify
 
 import discord
 import imgflip
@@ -54,20 +54,16 @@ class Bot(commands.Bot):
 
     # noinspection PyAttributeOutsideInit
     async def setup_bot(self):
-        nodes = [wavelink.Node(uri='hk.aarubot.xyz:57095', password='Aaru-the-cutiepie', secure=False)]
+        nodes = [wavelink.Node(uri='http://kexo.duckdns.org:2333/', password="kexopexo", retries=3, resume_timeout=0)]
 
-        sc: spotify.SpotifyClient = spotify.SpotifyClient(
-            client_id='85ea9836715b4911adec9dd2885f8149',
-            client_secret=os.getenv('SPOTIFY_SECRET')
-        )
+        await wavelink.Pool.connect(nodes=nodes, client=self)
+
         self.database = MongoClient(
-            f"mongodb+srv://{os.getenv('MONGO_URL')}@cluster0.exygx.mongodb.net/myFirstDatabase?retryWrites=true&w=majority")[
+            f"mongodb+srv://{os.getenv('MONGO_URL')}@cluster0.exygx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")[
             "KexoBOTDatabase"]["KexoBOTCollection"]
 
         self.main_class = MainBOT()
-
         self.node = nodes
-        await wavelink.NodePool.connect(client=self, nodes=nodes, spotify=sc)
 
 
 bot = Bot(intents=intents)
@@ -315,6 +311,11 @@ async def main_task(main_class):
 
 @tasks.loop(hours=1)
 async def main_loop():
+    # Wait for lavalink and pymongo to connect
+    while not hasattr(bot, "main_class"):
+        print('Waiting for connections')
+        await asyncio.sleep(3)
+
     await main_task(bot.main_class)
 
 
@@ -429,6 +430,34 @@ async def host(ctx, server_name, duration, password, region, category_maps, scri
             ephemeral=True)
 
 
+@bot.slash_command(name='recconnect_node', description='Retry connecting to node', guild_ids=[692810367851692032])
+@option('uri', description='Lavalink server URL (if not working, try adding http:// at start).')
+@option('port', description='Lavalink server port.')
+@option('password', description='Lavalink server password.')
+async def retry_node(ctx, uri, port, password):
+
+    nodes = [wavelink.Node(uri=f"{uri}:{port}", password=password, retries=1, resume_timeout=0)]
+    await wavelink.Pool.connect(nodes=nodes, client=bot)
+    bot.node = nodes
+
+    await ctx.trigger_typing()
+    await asyncio.sleep(2)
+
+    try:
+        await nodes[0].fetch_info()
+
+        embed = discord.Embed(title="",
+                              description=f'**✅ Connected to node `{uri}`**',
+                              color=discord.Color.blue())
+        await ctx.respond(embed=embed)
+
+    except aiohttp.client_exceptions.ClientConnectorError:
+        embed = discord.Embed(title="",
+                              description=f":x: Failed to connect to `{uri}`",
+                              color=discord.Color.from_rgb(r=255, g=0, b=0))
+        return await ctx.respond(embed=embed)
+
+
 @bot.slash_command(name='spam', description='Spams words, max is 50.  (Admin)', guild_only=True)
 @discord.default_permissions(administrator=True)
 @commands.cooldown(1, 50, commands.BucketType.user)
@@ -460,10 +489,10 @@ async def info(ctx):
     embed.add_field(name="Run time:ㅤㅤ" + '\u200b',
                     value=f"{str(timedelta(seconds=round(int(time.time()) - runTime)))}")
     embed.add_field(name="Ping:ㅤㅤㅤㅤ", value=f"{round(bot.latency * 1000)} ms")
-    embed.add_field(name="Version:", value="8.0.1")
+    embed.add_field(name="Version:", value="8.1.0")
     embed.add_field(name="Prefix:", value='`/` or `+`')
     embed.add_field(name="Py-cord version:ㅤ", value='2.5.0')
-    embed.add_field(name="Python version:", value='3.11.4')
+    embed.add_field(name="Python version:", value='3.12')
     embed.set_footer(text="Bot owner: _kexo")
     await ctx.respond(embed=embed)
 

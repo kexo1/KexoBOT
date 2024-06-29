@@ -7,7 +7,7 @@ WORKDIR /kexobot
 COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir --no-deps wavelink==2.6.5
+RUN pip install --no-cache-dir --no-deps wavelink
 
 COPY . .
 

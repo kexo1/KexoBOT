@@ -11,9 +11,6 @@
 
 Private discord python bot which is used for automation, music play, testing and mostly for fun.
 
-## Versioning
-* Python: ![version](https://img.shields.io/badge/version-3.11.4-blue)
-
 ## Built With
 
 * [py-cord](https://docs.pycord.dev/en/stable/) - Modern, easy to use, feature-rich, and async ready API wrapper for Discord written in Python

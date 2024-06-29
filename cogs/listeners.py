@@ -4,7 +4,6 @@ import discord
 import wavelink
 from discord.ext import commands
 from cogs.disconnect import Disconnect
-from wavelink import TrackEventPayload
 
 
 class Listeners(commands.Cog):
@@ -12,24 +11,8 @@ class Listeners(commands.Cog):
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_wavelink_node_ready(self, node: wavelink.Node):
-        """Event fired when a node has finished connecting.
-        Args:
-            node (wavelink.Node): _description_
-        """
-        print(f"Node: <{node.uri}> is ready!")
-
-    @commands.Cog.listener()
-    async def on_wavelink_track_end(self, payload: wavelink.TrackEventPayload) -> None:
-
-        if not payload.player.autoplay:
-            if not payload.player.queue.is_empty:
-                try:
-                    next_song: wavelink.Playable = payload.player.queue.get()
-                    if next_song:
-                        await payload.player.play(next_song)
-                except wavelink.exceptions.QueueEmpty:
-                    pass
+    async def on_wavelink_node_ready(self, payload: wavelink.NodeReadyEventPayload) -> None:
+        print(f"Node {payload.node.uri} is ready!")
 
     @commands.Cog.listener()
     async def on_voice_state_update(

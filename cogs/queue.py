@@ -19,7 +19,7 @@ class Queue(commands.Cog):
 
         vc: wavelink.Player = ctx.voice_client
 
-        if not vc or not vc.is_connected():
+        if not vc or not vc.connected:
             embed = discord.Embed(title="",
                                   description=ctx.author.mention + ", I'm not joined to vc",
                                   color=discord.Color.blue())
@@ -46,7 +46,7 @@ class Queue(commands.Cog):
                                   color=discord.Color.blue())
             return await ctx.respond(embed=embed, ephemeral=True)
 
-        if not vc.is_playing or not vc.current:
+        if not vc.playing or not vc.current:
             embed = discord.Embed(title="",
                                   description=ctx.author.mention + ", bot is not playing anything. Type `/p` from vc.",
                                   color=discord.Color.blue())
@@ -63,7 +63,7 @@ class Queue(commands.Cog):
 
         vc: wavelink.Player = ctx.voice_client
 
-        if not vc or not vc.is_connected():
+        if not vc or not vc.connected:
             embed = discord.Embed(title="",
                                   description=str(ctx.author.mention) + ", I'm not joined to vc",
                                   color=discord.Color.blue())
@@ -93,7 +93,7 @@ class Queue(commands.Cog):
 
         vc: wavelink.Player = ctx.voice_client
 
-        if not vc or not vc.is_connected():
+        if not vc or not vc.connected:
             embed = discord.Embed(title="",
                                   description=ctx.author.mention + ", I'm not joined to vc",
                                   color=discord.Color.blue())
@@ -121,7 +121,7 @@ class Queue(commands.Cog):
 
         vc: wavelink.Player = ctx.voice_client
 
-        if not vc.is_playing or not vc.current or not vc:
+        if not vc.playing or not vc.current or not vc:
             embed = discord.Embed(title="",
                                   description=ctx.author.mention + ", bot is not playing anything. Type `/p` from vc.",
                                   color=discord.Color.blue())
@@ -131,15 +131,15 @@ class Queue(commands.Cog):
             embed = discord.Embed(title="", description="**Queue is empty**", color=discord.Color.blue())
             return await ctx.respond(embed=embed)
 
-        if vc.queue.loop_all is True:
+        if vc.queue == wavelink.QueueMode.loop_all:
 
-            vc.queue.loop_all = False
+            vc.queue.mode = wavelink.QueueMode.loop_all
             embed = discord.Embed(title="",
                                   description="**No longer looping queue.**",
                                   color=discord.Color.blue())
             return await ctx.respond(embed=embed)
         else:
-            vc.queue.loop_all = True
+            vc.queue.mode = wavelink.QueueMode.loop_all
             embed = discord.Embed(title="",
                                   description=f"🔁 **Looping current queue ({vc.queue.count} songs)**",
                                   color=discord.Color.blue())
@@ -154,21 +154,21 @@ class Queue(commands.Cog):
 
         vc: wavelink.Player = ctx.voice_client
 
-        if not vc.is_playing or not vc.current or not vc:
+        if not vc.playing or not vc.current or not vc:
             embed = discord.Embed(title="",
                                   description=ctx.author.mention + ", bot is not playing anything. Type `/p` from vc.",
                                   color=discord.Color.blue())
             return await ctx.respond(embed=embed, ephemeral=True)
 
-        if vc.queue.loop:
+        if vc.queue == wavelink.QueueMode.loop:
 
-            vc.queue.loop = False
+            vc.queue.mode = wavelink.QueueMode.normal
             embed = discord.Embed(title="",
                                   description="**No longer looping current song.**",
                                   color=discord.Color.blue())
             await ctx.respond(embed=embed)
         else:
-            vc.queue.loop = True
+            vc.queue.mode = wavelink.QueueMode.loop
             embed = discord.Embed(title="",
                                   description=f"🔁 **Looping [{vc.current.title}]({vc.current.uri}).**",
                                   color=discord.Color.blue())
@@ -182,7 +182,7 @@ class Queue(commands.Cog):
 
         vc: wavelink.Player = ctx.voice_client
 
-        if not vc or not vc.is_connected():
+        if not vc or not vc.connected:
             embed = discord.Embed(title="",
                                   description=ctx.author.mention + ", I'm not joined to vc",
                                   color=discord.Color.blue())
@@ -196,10 +196,10 @@ class Queue(commands.Cog):
     @staticmethod
     async def get_queue_embed(ctx, vc):
 
-        if vc.queue.loop_all is True:
+        if vc.queue.mode.loop_all is True:
             status = 'Looping queue'
             footer = '🔁 '
-        elif vc.queue.loop is True:
+        elif vc.queue.mode.loop is True:
             status = 'Looping currently playing song'
             footer = '🔁 '
         else:
@@ -233,7 +233,7 @@ class Queue(commands.Cog):
         )
         embed.set_author(name="Playback Information")
         embed.set_footer(
-            text=f"Requested by {vc.current.ctx.name}",
+            text=f"Requested by {vc.current.ctx.author.name}",
             icon_url=ctx.author.display_avatar.url,
         )
         embed.add_field(name="Track title", value=f"**[{vc.current.title}]({vc.current.uri})**", inline=False)
@@ -243,8 +243,7 @@ class Queue(commands.Cog):
             inline=False,
         )
 
-        if isinstance(vc.current, wavelink.YouTubeTrack):
-            embed.set_image(url=vc.current.thumbnail)
+        embed.set_image(url=vc.current.artwork)
 
         position = divmod(vc.position, 60000)
         length = divmod(vc.current.length, 60000)
