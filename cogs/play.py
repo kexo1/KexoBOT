@@ -4,7 +4,6 @@ import re
 import discord
 import wavelink
 from discord import option
-from discord.ui import Button, View
 from discord.ext import commands
 from discord import HTTPException
 from discord.commands import slash_command
@@ -17,63 +16,48 @@ class Play(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+    @staticmethod
+    def queue_embed(track):
+        return discord.Embed(title="", description=f"**Added to queue:\n [{track.title}]({track.uri})**",
+                             color=discord.Color.blue())
+
+    @staticmethod
+    def queue_embed_list(playlist, count):
+        return discord.Embed(title="", description=f"Added the playlist **`{playlist}`** ({count} songs) to the queue.",
+                             color=discord.Color.blue())
+
+    @staticmethod
+    def playing_embed(requester: None, payload: None):
+
+        if not requester:
+
+            if hasattr(payload.player.current.requester.avatar, "url"):
+                author_pfp = payload.player.current.requester.avatar.url
+            else:  # Some users don't have pfp
+                author_pfp = None
+
+            embed = discord.Embed(color=discord.Colour.green(), title='Now playing',
+                                  description='[**{}**]({})'.format(payload.track.title, payload.track.uri))
+            embed.set_footer(text=f'Requested by {payload.player.current.requester.name}', icon_url=author_pfp)
+            embed.set_thumbnail(url=payload.player.current.artwork)
+        else:
+            if hasattr(requester.avatar, "url"):
+                author_pfp = requester.avatar.url
+            else:  # Some users don't have pfp
+                author_pfp = None
+
+            embed = discord.Embed(color=discord.Colour.green(), title='Now playing',
+                                  description='[**{}**]({})'.format(payload.title, payload.uri))
+            embed.set_footer(text=f'Requested by {requester.name}', icon_url=author_pfp)
+            embed.set_thumbnail(url=payload.artwork)
+
+        return embed
+
     @commands.Cog.listener()
     async def on_wavelink_track_start(self, payload: wavelink.TrackStartEventPayload):
 
-        author_name = payload.player.current.ctx.author.name
-
-        try:
-            author_pfp = payload.player.current.ctx.author.avatar.url
-        except AttributeError:
-            # Some users don't have pfp
-            author_pfp = None
-
-        embed = discord.Embed(color=discord.Colour.green(), title='Now playing',
-                              description='[**{}**]({})'.format(payload.track.title, payload.track.uri))
-
-        if not hasattr(payload.player.current, 'ctx'):
-            embed.set_footer(text=f'Youtube Mix',
-                             icon_url='https://clipartcraft.com/images/youtube-logo-transparent-circle-9.png')
-        else:
-            embed.set_footer(text=f'Requested by {author_name}',
-                             icon_url=author_pfp)
-
-        embed.set_thumbnail(url=payload.player.current.artwork)
-
-        async def button1_callback(interaction):
-            await self.skip_command(interaction)
-
-        async def button2_callback(interaction):
-            if '⏸️' in str(button2.emoji):
-                await self.pause_command(interaction)
-                button2.emoji = '▶'
-            else:
-                await self.resume_command(interaction)
-                button2.emoji = '⏸️'
-
-            await interaction.message.edit(view=view)
-
-        button1 = Button(emoji='⏭️')
-        button2 = Button(emoji='⏸️')
-        button1.callback = button1_callback
-        button2.callback = button2_callback
-
-        view = View(timeout=payload.track.length / 1000)
-        view.add_item(button1)
-        view.add_item(button2)
-
-        if payload.player.queue.is_empty:
-            try:
-                await payload.player.current.ctx.respond(embed=embed, view=view)
-            except (HTTPException, AttributeError):
-                # If timed out, or YouTube algorithm
-                try:
-                    await payload.player.text_channel.send(embed=embed, view=view)
-                except discord.Forbidden:
-                    # If no permissions
-                    pass
-        else:
-            await payload.player.text_channel.send(embed=embed, view=view)
+        if not payload.player.queue.is_empty and not payload.player.first:
+            await payload.player.text_channel.send(embed=self.playing_embed(None, payload))
 
     @slash_command(name='play', description='Plays song.', guild_only=True)
     @commands.cooldown(1, 4, commands.BucketType.user)
@@ -82,17 +66,14 @@ class Play(commands.Cog):
 
         if not ctx.author.voice:
             embed = discord.Embed(title="",
-                                  description=str(
-                                      ctx.author.mention) + ", you're not in vc, type `/p` from vc.",
+                                  description=str(ctx.author.mention) + ", you're not in vc, type `/p` from vc.",
                                   color=discord.Color.blue())
             return await ctx.respond(embed=embed)
 
         if ctx.voice_client:
             if ctx.voice_client.channel.id != ctx.author.voice.channel.id:
-                embed = discord.Embed(title="",
-                                      description=str(
-                                          ctx.author.mention) + ", bot is already playing in a voice channel.",
-                                      color=discord.Color.blue())
+                embed = discord.Embed(title="", description=str(
+                    ctx.author.mention) + ", bot is already playing in a voice channel.", color=discord.Color.blue())
                 return await ctx.respond(embed=embed)
 
         if not ctx.voice_client:
@@ -107,6 +88,7 @@ class Play(commands.Cog):
 
                 await ctx.defer()
             except wavelink.InvalidChannelPermissions:
+
                 embed = discord.Embed(title="",
                                       description=f":x: I don't have permissions to join your channel.",
                                       color=discord.Color.from_rgb(r=255, g=0, b=0))
@@ -118,22 +100,22 @@ class Play(commands.Cog):
             await ctx.respond(embed=embed)
 
             vc.autoplay = wavelink.AutoPlayMode.partial
-            # vc.auto_queue = True
             vc.text_channel = ctx.channel
+            # vc.auto_queue = True
         else:
             vc: wavelink.Player = ctx.voice_client
 
         await ctx.trigger_typing()
-
         tracks: wavelink.Search = await wavelink.Playable.search(search)
+
         if isinstance(tracks, wavelink.Playlist):
             added: int = vc.queue.put(tracks)
 
             for track in tracks:
-                track.ctx = ctx
+                track.requester = ctx.author  # Append author
 
             track: wavelink.Playable = tracks[0]
-            await ctx.respond(embed=self.return_embed_list(tracks.name, added))
+            await ctx.respond(embed=self.queue_embed_list(tracks.name, added))
         else:
             if not tracks:
                 embed = discord.Embed(title="",
@@ -142,19 +124,17 @@ class Play(commands.Cog):
                 return await ctx.respond(embed=embed)
 
             track: wavelink.Playable = tracks[0]
-            # Append request author, need full ctx due to respond commands
-            track.ctx = ctx
+            track.requester = ctx.author  # Append request author
 
         if vc.playing or vc.paused:
-            await ctx.respond(embed=self.return_embed(track))
+            vc.first = False  # Defines if it's first song, if True bot will use respond() instead of send
+            await ctx.respond(embed=self.queue_embed(track))
             vc.queue.put(track)
         else:
+            vc.first = True
             await vc.play(track)
-            # Due to autoplay the first song does not remove itself after skipping
-            vc.queue.remove(track)
-            # Somtimes wavelink just sleeps :/
-            if not vc.playing:
-                await vc.play(track)
+            await ctx.respond(embed=self.playing_embed(ctx.author, track))
+            vc.queue.remove(track)  # Due to autoplay the first song does not remove itself after skipping
 
     @slash_command(name='play-next', description='Put this song next in queue, bypassing others.', guild_only=True)
     @commands.cooldown(1, 4, commands.BucketType.user)
@@ -164,8 +144,7 @@ class Play(commands.Cog):
 
         if not ctx.author.voice:
             embed = discord.Embed(title="",
-                                  description=str(
-                                      ctx.author.mention) + ", you're not in vc, type `/p` from vc.",
+                                  description=str(ctx.author.mention) + ", you're not in vc, type `/p` from vc.",
                                   color=discord.Color.blue())
             return await ctx.respond(embed=embed)
 
@@ -205,10 +184,10 @@ class Play(commands.Cog):
             added: int = vc.queue.put(tracks)
 
             for track in tracks:
-                track.ctx = ctx
+                track.requester = ctx.author  # Append request author
 
             track: wavelink.Playable = tracks[0]
-            await ctx.respond(embed=self.return_embed_list(tracks.name, added))
+            await ctx.respond(embed=self.queue_embed_list(tracks.name, added))
         else:
             if not tracks:
                 embed = discord.Embed(title="",
@@ -218,18 +197,17 @@ class Play(commands.Cog):
 
             track: wavelink.Playable = tracks[0]
             # Append request author, need full ctx due to respond commands
-            track.ctx = ctx
+            track.requester = ctx.author  # Append request author
 
         if vc.playing or vc.paused:
-            await ctx.respond(embed=self.return_embed(track))
+            vc.first = False
+            await ctx.respond(embed=self.queue_embed(track))
             vc.queue.put_at(0, track)
         else:
+            vc.first = True
             await vc.play(track)
-            # Due to autoplay the first song does not remove itself after skipping
-            vc.queue.remove(track)
-            # Somtimes wavelink just sleeps :/
-            if not vc.playing:
-                await vc.play(track)
+            await ctx.respond(embed=self.playing_embed(ctx.author, track))
+            vc.queue.remove(track)  # Due to autoplay the first song does not remove itself after skipping
 
     @slash_command(name='skip', description='Skip playing song.', guild_only=True)
     async def skip_command(self, ctx):
@@ -254,14 +232,9 @@ class Play(commands.Cog):
             return await ctx.response.send_message(embed=embed)
 
         await vc.skip()
+        vc.first = False
 
-        embed = discord.Embed(title="",
-                              description="**⏭️   Skipped**",
-                              color=discord.Color.blue())
-
-        if type(ctx) is discord.interactions.Interaction:
-            embed.set_footer(text=f'Requested by {ctx.user.name}',
-                             icon_url=ctx.user.avatar.url if ctx.user.avatar else None)
+        embed = discord.Embed(title="", description="**⏭️   Skipped**", color=discord.Color.blue())
 
         await ctx.response.send_message(embed=embed)
 
@@ -293,6 +266,7 @@ class Play(commands.Cog):
             vc.queue.put_at(0, track)
             del vc.queue[pos - 1]
             await vc.stop()
+
             embed = discord.Embed(title="",
                                   description=f"**Skipped to [{track.title}]({track.uri})**",
                                   color=discord.Color.blue())
@@ -320,14 +294,9 @@ class Play(commands.Cog):
 
         await vc.pause(True)
 
-        if type(ctx) is discord.interactions.Interaction:
-            embed = discord.Embed(title="",
-                                  description=f"**⏸️   Paused by {ctx.user.name}**",
-                                  color=discord.Color.blue())
-        else:
-            embed = discord.Embed(title="",
-                                  description="**⏸️   Paused**",
-                                  color=discord.Color.blue())
+        embed = discord.Embed(title="",
+                              description="**⏸️   Paused**",
+                              color=discord.Color.blue())
 
         embed.set_footer(text=f'Deleting in 10s.')
         await ctx.response.send_message(embed=embed, delete_after=10)
@@ -350,31 +319,12 @@ class Play(commands.Cog):
 
         await vc.pause(False)
 
-        if type(ctx) is discord.interactions.Interaction:
-            embed = discord.Embed(title="",
-                                  description=f"**:arrow_forward: Resumed by {ctx.user.name}**",
-                                  color=discord.Color.blue())
-        else:
-            embed = discord.Embed(title="",
-                                  description="**:arrow_forward: Resumed**",
-                                  color=discord.Color.blue())
+        embed = discord.Embed(title="",
+                              description="**:arrow_forward: Resumed**",
+                              color=discord.Color.blue())
 
         embed.set_footer(text=f'Deleting in 10s.')
         await ctx.response.send_message(embed=embed, delete_after=10)
-
-    @staticmethod
-    def return_embed(track):
-        embed = discord.Embed(title="",
-                              description=f"**Added to queue:\n [{track.title}]({track.uri})**",
-                              color=discord.Color.blue())
-        return embed
-
-    @staticmethod
-    def return_embed_list(playlist, count):
-        embed = discord.Embed(title="",
-                              description=f"Added the playlist **`{playlist}`** ({count} songs) to the queue.",
-                              color=discord.Color.blue())
-        return embed
 
 
 def setup(bot: commands.Bot) -> None:

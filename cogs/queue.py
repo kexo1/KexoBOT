@@ -131,7 +131,7 @@ class Queue(commands.Cog):
             embed = discord.Embed(title="", description="**Queue is empty**", color=discord.Color.blue())
             return await ctx.respond(embed=embed)
 
-        if vc.queue == wavelink.QueueMode.loop_all:
+        if vc.queue.mode == wavelink.QueueMode.loop_all:
 
             vc.queue.mode = wavelink.QueueMode.loop_all
             embed = discord.Embed(title="",
@@ -160,7 +160,7 @@ class Queue(commands.Cog):
                                   color=discord.Color.blue())
             return await ctx.respond(embed=embed, ephemeral=True)
 
-        if vc.queue == wavelink.QueueMode.loop:
+        if vc.queue.mode == wavelink.QueueMode.loop:
 
             vc.queue.mode = wavelink.QueueMode.normal
             embed = discord.Embed(title="",
@@ -196,10 +196,10 @@ class Queue(commands.Cog):
     @staticmethod
     async def get_queue_embed(ctx, vc):
 
-        if vc.queue.mode.loop_all is True:
+        if vc.queue.mode == wavelink.QueueMode.loop_all:
             status = 'Looping queue'
             footer = '🔁 '
-        elif vc.queue.mode.loop is True:
+        elif vc.queue.mode == wavelink.QueueMode.loop:
             status = 'Looping currently playing song'
             footer = '🔁 '
         else:
@@ -208,15 +208,10 @@ class Queue(commands.Cog):
 
         fmt = []
         for pos, track in enumerate(vc.queue):
-            if not hasattr(track, 'ctx'):
-                track.ctx.author.name = 'Youtube Mix'
-            fmt.append(f"`{pos + 1}.` **[{track.title[:1023]}]({track.uri})** \n `{int(divmod(track.length, 60000)[0])}:{round(divmod(track.length, 60000)[1] / 1000):02} | Requested by: {track.ctx.author.name}`\n")
+            fmt.append(f"`{pos + 1}.` **[{track.title[:1023]}]({track.uri})** \n `{int(divmod(track.length, 60000)[0])}:{round(divmod(track.length, 60000)[1] / 1000):02} | Requested by: {track.requester.name}`\n")
         fmt = '\n'.join(fmt)
 
-        if not hasattr(vc.current, 'ctx'):
-            vc.current.ctx.author.name = 'Youtube Mix'
-
-        fmt = f"\n***__{status}:__***\n **[{vc.current.title[:1023]}]({vc.current.uri})** \n `{int(divmod(vc.current.length, 60000)[0])}:{round(divmod(vc.current.length, 60000)[1] / 1000):02} | Requested by: {vc.current.ctx.author.name}`\n\n ***__Next:__***\n" + fmt[:3800]
+        fmt = f"\n***__{status}:__***\n **[{vc.current.title[:1023]}]({vc.current.uri})** \n `{int(divmod(vc.current.length, 60000)[0])}:{round(divmod(vc.current.length, 60000)[1] / 1000):02} | Requested by: {vc.current.requester.name}`\n\n ***__Next:__***\n" + fmt[:3800]
         embed = discord.Embed(title=f'Queue for {ctx.guild.name}', description=fmt, color=discord.Color.blue())
         embed.set_footer(text=f"\n{footer}{vc.queue.count} songs in queue")
         return embed
